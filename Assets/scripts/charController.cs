@@ -4,7 +4,34 @@ using UnityEngine;
 using UnityEngine.Analytics;
 using System;
 using Unity.Services.Core;
+using Newtonsoft.Json;
+using UnityEngine.Networking;
+using System.Text;
 //using Unity.Services.Analytics;
+
+public class muerteAdapt
+{
+    public string usuario;
+    public string inicioRun;
+    public int nivel;
+    public float dificultad;
+    public float tiempo;
+    public int salasTotales;
+    public int salasCompletadas;
+    public int danoRecibido;
+    public muerteAdapt(string us, string ini, int niv, float dif, float t, int st, int sc, int dr)
+    {
+        this.usuario = us;
+        this.inicioRun = ini;
+        this.nivel = niv;
+        this.dificultad = dif;
+        this.tiempo = t;
+        this.salasTotales = st;
+        this.salasCompletadas = sc;
+        this.danoRecibido = dr;
+    }
+}
+
 public class charController : MonoBehaviour
 {
     //public float speed;
@@ -96,44 +123,51 @@ public class charController : MonoBehaviour
         {
             salaActual.mandarEvaluadorEnemigos();
         }
-        //Debug.Log("Analytics : " + gm.identificadorMaq + "--" + "muerte");
-        /*AnalyticsService.Instance.CustomData("muerteRun", new Dictionary<string, object>
-                {
-                    { "UserRun",gm.identificadorMaq},
-                    { "nivelActual", GameObject.Find("dificultad").GetComponent<dificultadLineal>().nivelDificultad },
-                });
-        try
-        {
-            AnalyticsService.Instance.Flush();
-        }
-        catch
-        {
-        }
-        //Debug.Log("Analytics : " + gm.usuario + "--" + "muerte");
-        AnalyticsService.Instance.CustomData("muerteUsuario", new Dictionary<string, object>
-                {
-                    { "User",gm.usuario},
-                    { "nivelActual", GameObject.Find("dificultad").GetComponent<dificultadLineal>().nivelDificultad },
-                });
-        try
-        {
-            AnalyticsService.Instance.Flush();
-        }
-        catch
-        {
-        }*/
-        //analytics
-        Debug.Log("muerteRun: " + Analytics.IsCustomEventEnabled("muerteRun"));
+        //---------------PruebaFirebaseNest--------------
+        string id = gm.identificadorMaq.Replace('.', ',');
+        id = id.Replace('/', ',');
+        string[] ident = id.Split('|');
+        dificultadAdaptable df = GameObject.Find("dificultad").GetComponent<dificultadAdaptable>();
+        muerteAdapt ma = new muerteAdapt(ident[0], ident[1], df.nivel, df.nivelDificultad, gm.tiempoNivel, gm.salasActuales.contadorSalas + 1, gm.salasActuales.salasSuperadas, danoNivel);
+        string jsonString = JsonConvert.SerializeObject(ma);
+        StartCoroutine(muerte(jsonString));
+        //-----------------------------------------------
+        /*//Debug.Log("muerteRun: " + Analytics.IsCustomEventEnabled("muerteRun"));
         AnalyticsResult anRes = Analytics.CustomEvent("muerteRun-" + gm.identificadorMaq + "-" + GameObject.Find("dificultad").GetComponent<dificultadAdaptable>().nivel+"dif: "+ GameObject.Find("dificultad").GetComponent<dificultadAdaptable>().nivelDificultad);
-        Debug.Log("analyticsResult muerteRun: " + anRes);
+        //Debug.Log("analyticsResult muerteRun: " + anRes);
         Analytics.FlushEvents();
-        Debug.Log("muerteUsuario: " + Analytics.IsCustomEventEnabled("muerteUsuario"));
+        //Debug.Log("muerteUsuario: " + Analytics.IsCustomEventEnabled("muerteUsuario"));
         anRes = Analytics.CustomEvent("muerteUsuario-" + gm.usuario + "-" + GameObject.Find("dificultad").GetComponent<dificultadAdaptable>().nivel);
-        Debug.Log("analyticsResult muerteUsuario: " + anRes);
-        Analytics.FlushEvents();
-        Debug.Log("se hizo analytics de muerte");
-
+        //Debug.Log("analyticsResult muerteUsuario: " + anRes);
+        Analytics.FlushEvents();*/
+        //Debug.Log("se hizo analytics de muerte");
         Invoke("habilitarMenu", 1f);
+    }
+    IEnumerator muerte(string js)
+    {
+        UnityWebRequest uwr = new UnityWebRequest("https://pcg-nest.herokuapp.com/muerteAdapt", "POST");
+        byte[] xmlToSend = Encoding.UTF8.GetBytes(js);
+        uwr.uploadHandler = (UploadHandler)new UploadHandlerRaw(xmlToSend);
+        string cadenadeXML = Encoding.UTF8.GetString(xmlToSend);
+        //Debug.Log(cadenadeXML);
+        uwr.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+        uwr.SetRequestHeader("Content-Type", "application/json");
+        yield return uwr.SendWebRequest();
+        if (uwr.isNetworkError || uwr.isHttpError)
+        {
+            string servicioResult2 = uwr.downloadHandler.text;
+            Debug.Log("error webrequest: " + servicioResult2);
+            Debug.Log("statusCode: " + uwr.responseCode);
+            uwr.Dispose();
+            yield break;
+        }
+        else
+        {
+            Debug.Log("se envio la data");
+            Debug.Log("statusCode: " + uwr.responseCode);
+            uwr.Dispose();
+            yield break;
+        }
     }
 
     private void FixedUpdate()

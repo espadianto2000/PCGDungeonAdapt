@@ -3,8 +3,48 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Analytics;
 using Unity.Services.Core;
+using Newtonsoft.Json;
+using UnityEngine.Networking;
+using System.Text;
 //using Unity.Services.Analytics;
 
+public class salaFAdapt
+{
+    public string usuario;
+    public string inicioRun;
+    public int nivel;
+    public float dificultad;
+    public DanoRecibido danoRecibido = new DanoRecibido();
+    public ValoracionesEnemigos valoracionEnemigos = new ValoracionesEnemigos();
+    public float tiempoSala;
+    public int danoRecibidoJefe;
+    public bool salaJefe;
+    public salaFAdapt(string us, string ini, int niv, float dif, int en1, int en2, int en3, int en4, float[] val, float t, int danoJ, bool jef)
+    {
+        this.usuario = us;
+        this.inicioRun = ini;
+        this.nivel = niv;
+        this.dificultad = dif;
+        this.danoRecibido.enem1 = en1;
+        this.danoRecibido.enem2 = en2;
+        this.danoRecibido.enem3 = en3;
+        this.danoRecibido.enem4 = en4;
+        this.valoracionEnemigos.enem1 = val[0];
+        this.valoracionEnemigos.enem2 = val[1];
+        this.valoracionEnemigos.enem3 = val[2];
+        this.valoracionEnemigos.enem4 = val[3];
+        this.tiempoSala = t;
+        this.danoRecibidoJefe = danoJ;
+        this.salaJefe = jef;
+    }
+}
+public class DanoRecibido
+{
+    public int enem1;
+    public int enem2;
+    public int enem3;
+    public int enem4;
+}
 public class updateCam : MonoBehaviour
 {
     public GameObject cam;
@@ -41,6 +81,7 @@ public class updateCam : MonoBehaviour
     public float tiempoSala = -1;
     private AudioManager am;
     public string nombreBoss;
+    public salaFAdapt sf;
     // Start is called before the first frame update
     void Start()
     {
@@ -97,7 +138,6 @@ public class updateCam : MonoBehaviour
         }
         if (moverjugador)
         {
-            //player.GetComponent<charController>().speed = 0f;
             player.transform.position = Vector3.MoveTowards(player.transform.position, destino, 5 * Time.deltaTime);
             if(Vector3.Distance(player.transform.position, destino) < 0.01f)
             {
@@ -129,25 +169,16 @@ public class updateCam : MonoBehaviour
             
             if (gm.identificado)
             {
-                //Debug.Log("Analytics : " + gm.identificadorMaq + "--" + "salaFinalizada");
-                /*AnalyticsService.Instance.CustomData("salaFinalizada", new Dictionary<string, object>
-                {
-                    { "UserRun",gm.identificadorMaq},
-                    { "nivelActual", dl.nivelDificultad },
-                    { "tiempo", tiempoSala },
-                    { "danoRecibido", danoRecibidoEnSala },
-                    { "salaJefe", spawnPortal }
-                });
-                try
-                {
-                    AnalyticsService.Instance.Flush();
-                }
-                catch
-                {
-
-                }*/
-                //analytics
-                Debug.Log("salaFinalizada: " + Analytics.IsCustomEventEnabled("salaFinalizada"));
+                //---------------PruebaFirebaseNest--------------
+                string id = gm.identificadorMaq.Replace('.', ',');
+                id = id.Replace('/', ',');
+                string[] ident = id.Split('|');
+                sf = new salaFAdapt(ident[0], ident[1], dl.nivel, dl.nivelDificultad, danoEnem1, danoEnem2, danoEnem3, danoEnem4, dl.GetComponent<evaluadorDeDesempeño>().valoraciones, tiempoSala, danoRecibidoEnSala, spawnPortal);
+                string jsonString = JsonConvert.SerializeObject(sf);
+                Debug.Log(jsonString);
+                StartCoroutine(salaFinalizada(jsonString));
+                //-----------------------------------------------
+                /*Debug.Log("salaFinalizada: " + Analytics.IsCustomEventEnabled("salaFinalizada"));
                 AnalyticsResult anRes = Analytics.CustomEvent("salaFinalizada-"+ gm.identificadorMaq +"-"+ dl.nivel+"dif: "+dl.nivelDificultad+"("+danoEnem1+","+danoEnem2+","+danoEnem3+","+danoEnem4+")", new Dictionary<string, object>
                 {
                     { "tiempo", tiempoSala },
@@ -156,7 +187,7 @@ public class updateCam : MonoBehaviour
                     {"valoracionesEnemigos","("+dl.GetComponent<evaluadorDeDesempeño>().valoraciones[0]+","+dl.GetComponent<evaluadorDeDesempeño>().valoraciones[1]+","+dl.GetComponent<evaluadorDeDesempeño>().valoraciones[2]+","+dl.GetComponent<evaluadorDeDesempeño>().valoraciones[3]+")" }
                 });
                 Debug.Log("analyticsResult salaFinalizada: " + anRes);
-                Analytics.FlushEvents();
+                Analytics.FlushEvents();*/
                 tiempoSala = -1;
             }
             salas.salasSuperadas++;
@@ -182,14 +213,33 @@ public class updateCam : MonoBehaviour
             Debug.Log("desempeño enem3: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[2]);
             Debug.Log("desempeño enem4: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[3]);
             List<int>[] temp = dl.GetComponent<evaluadorDeDesempeño>().listaDeArrays[dl.nivel];
-            /*for(int i = 0; i < temp.Length; i++)
-            {
-                foreach(int val in temp[i])
-                {
-                    Debug.Log("enem " + i + ": " + val);
-                }
-            }*/
             dl.actualizarModelosEnemigos();
+        }
+    }
+    IEnumerator salaFinalizada(string js)
+    {
+        UnityWebRequest uwr = new UnityWebRequest("https://pcg-nest.herokuapp.com/salaAdapt", "POST");
+        byte[] xmlToSend = Encoding.UTF8.GetBytes(js);
+        uwr.uploadHandler = (UploadHandler)new UploadHandlerRaw(xmlToSend);
+        string cadenadeXML = Encoding.UTF8.GetString(xmlToSend);
+        //Debug.Log(cadenadeXML);
+        uwr.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+        uwr.SetRequestHeader("Content-Type", "application/json");
+        yield return uwr.SendWebRequest();
+        if (uwr.isNetworkError || uwr.isHttpError)
+        {
+            string servicioResult2 = uwr.downloadHandler.text;
+            Debug.Log("error webrequest: " + servicioResult2);
+            Debug.Log("statusCode: " + uwr.responseCode);
+            uwr.Dispose();
+            yield break;
+        }
+        else
+        {
+            Debug.Log("se envio la data");
+            Debug.Log("statusCode: " + uwr.responseCode);
+            uwr.Dispose();
+            yield break;
         }
     }
     public void mandarEvaluadorEnemigos()
@@ -265,10 +315,10 @@ public class updateCam : MonoBehaviour
             }
             salaOut.SetActive(false);
             salaIn.SetActive(true);
-            Debug.Log(transform.position.x + "," + transform.position.z);
+            //Debug.Log(transform.position.x + "," + transform.position.z);
             foreach(GameObject cuadro in GameObject.FindGameObjectsWithTag("Unknown"))
             {
-                Debug.Log(cuadro.transform.position.x+","+cuadro.transform.position.z);
+                //Debug.Log(cuadro.transform.position.x+","+cuadro.transform.position.z);
                 if((Mathf.Abs(cuadro.transform.position.x-transform.position.x) == 11 && Mathf.Abs(cuadro.transform.position.z - transform.position.z) == 0) || (Mathf.Abs(cuadro.transform.position.z-transform.position.z) == 11 && Mathf.Abs(cuadro.transform.position.x - transform.position.x) == 0))
                 {
                     cuadro.transform.GetChild(0).gameObject.SetActive(true);
