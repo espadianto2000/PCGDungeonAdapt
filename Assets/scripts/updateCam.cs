@@ -17,7 +17,7 @@ public class salaFAdapt
     public DanoRecibido danoRecibido = new DanoRecibido();
     public ValoracionesEnemigos valoracionEnemigos = new ValoracionesEnemigos();
     public float tiempoSala;
-    public int danoRecibidoJefe;
+    public int danoRecibidoTotal;
     public bool salaJefe;
     public salaFAdapt(string us, string ini, int niv, float dif, int en1, int en2, int en3, int en4, float[] val, float t, int danoJ, bool jef)
     {
@@ -34,7 +34,7 @@ public class salaFAdapt
         this.valoracionEnemigos.enem3 = val[2];
         this.valoracionEnemigos.enem4 = val[3];
         this.tiempoSala = t;
-        this.danoRecibidoJefe = danoJ;
+        this.danoRecibidoTotal = danoJ;
         this.salaJefe = jef;
     }
 }
@@ -173,7 +173,7 @@ public class updateCam : MonoBehaviour
                 string id = gm.identificadorMaq.Replace('.', ',');
                 id = id.Replace('/', ',');
                 string[] ident = id.Split('|');
-                sf = new salaFAdapt(ident[0], ident[1], dl.nivel, dl.nivelDificultad, danoEnem1, danoEnem2, danoEnem3, danoEnem4, dl.GetComponent<evaluadorDeDesempeño>().valoraciones, tiempoSala, danoRecibidoEnSala, spawnPortal);
+                sf = new salaFAdapt(ident[0], ident[1], dl.nivel, dl.nivelDificultad, danoEnem1, danoEnem2, danoEnem3, danoEnem4, dl.GetComponent<evaluadorDeDesempeÃ±o>().valoraciones, tiempoSala, danoRecibidoEnSala, spawnPortal);
                 string jsonString = JsonConvert.SerializeObject(sf);
                 Debug.Log(jsonString);
                 StartCoroutine(salaFinalizada(jsonString));
@@ -184,7 +184,7 @@ public class updateCam : MonoBehaviour
                     { "tiempo", tiempoSala },
                     { "danoRecibido", danoRecibidoEnSala },
                     { "salaJefe", spawnPortal },
-                    {"valoracionesEnemigos","("+dl.GetComponent<evaluadorDeDesempeño>().valoraciones[0]+","+dl.GetComponent<evaluadorDeDesempeño>().valoraciones[1]+","+dl.GetComponent<evaluadorDeDesempeño>().valoraciones[2]+","+dl.GetComponent<evaluadorDeDesempeño>().valoraciones[3]+")" }
+                    {"valoracionesEnemigos","("+dl.GetComponent<evaluadorDeDesempeï¿½o>().valoraciones[0]+","+dl.GetComponent<evaluadorDeDesempeï¿½o>().valoraciones[1]+","+dl.GetComponent<evaluadorDeDesempeï¿½o>().valoraciones[2]+","+dl.GetComponent<evaluadorDeDesempeï¿½o>().valoraciones[3]+")" }
                 });
                 Debug.Log("analyticsResult salaFinalizada: " + anRes);
                 Analytics.FlushEvents();*/
@@ -208,11 +208,11 @@ public class updateCam : MonoBehaviour
             {
                 mandarEvaluadorEnemigos();
             }
-            Debug.Log("desempeño enem1: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[0]);
-            Debug.Log("desempeño enem2: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[1]);
-            Debug.Log("desempeño enem3: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[2]);
-            Debug.Log("desempeño enem4: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[3]);
-            List<int>[] temp = dl.GetComponent<evaluadorDeDesempeño>().listaDeArrays[dl.nivel];
+            Debug.Log("desempeÃ±o enem1: " + dl.GetComponent<evaluadorDeDesempeÃ±o>().valoraciones[0]);
+            Debug.Log("desempeÃ±o enem2: " + dl.GetComponent<evaluadorDeDesempeÃ±o>().valoraciones[1]);
+            Debug.Log("desempeÃ±o enem3: " + dl.GetComponent<evaluadorDeDesempeÃ±o>().valoraciones[2]);
+            Debug.Log("desempeÃ±o enem4: " + dl.GetComponent<evaluadorDeDesempeÃ±o>().valoraciones[3]);
+            List<int>[] temp = dl.GetComponent<evaluadorDeDesempeÃ±o>().listaDeArrays[dl.nivel];
             dl.actualizarModelosEnemigos();
         }
     }
@@ -246,34 +246,34 @@ public class updateCam : MonoBehaviour
     {
         if (tipoEnems[0])
         {
-            dl.GetComponent<evaluadorDeDesempeño>().ocurrenciaEnemigo1(dl.nivel, danoEnem1);
+            dl.GetComponent<evaluadorDeDesempeÃ±o>().ocurrenciaEnemigo1(dl.nivel, danoEnem1);
         }
         if (tipoEnems[1])
         {
-            dl.GetComponent<evaluadorDeDesempeño>().ocurrenciaEnemigo2(dl.nivel, danoEnem2);
+            dl.GetComponent<evaluadorDeDesempeÃ±o>().ocurrenciaEnemigo2(dl.nivel, danoEnem2);
         }
         if (tipoEnems[2])
         {
-            dl.GetComponent<evaluadorDeDesempeño>().ocurrenciaEnemigo3(dl.nivel, danoEnem3);
+            dl.GetComponent<evaluadorDeDesempeÃ±o>().ocurrenciaEnemigo3(dl.nivel, danoEnem3);
         }
         if (tipoEnems[3])
         {
-            dl.GetComponent<evaluadorDeDesempeño>().ocurrenciaEnemigo4(dl.nivel, danoEnem4);
+            dl.GetComponent<evaluadorDeDesempeÃ±o>().ocurrenciaEnemigo4(dl.nivel, danoEnem4);
         }
     }
     public void mandarEvaluadorBoss()
     {
         if (nombreBoss.Contains("Red"))
         {
-            dl.GetComponent<evaluadorDeDesempeño>().ocurrenciaBoss1(dl.nivel, danoRecibidoEnSala);
+            dl.GetComponent<evaluadorDeDesempeÃ±o>().ocurrenciaBoss1(dl.nivel, danoRecibidoEnSala);
         }
         if (nombreBoss.Contains("among us"))
         {
-            dl.GetComponent<evaluadorDeDesempeño>().ocurrenciaBoss2(dl.nivel, danoRecibidoEnSala);
+            dl.GetComponent<evaluadorDeDesempeÃ±o>().ocurrenciaBoss2(dl.nivel, danoRecibidoEnSala);
         }
         if (nombreBoss.Contains("GruntPol"))
         {
-            dl.GetComponent<evaluadorDeDesempeño>().ocurrenciaBoss3(dl.nivel, danoRecibidoEnSala);
+            dl.GetComponent<evaluadorDeDesempeÃ±o>().ocurrenciaBoss3(dl.nivel, danoRecibidoEnSala);
         }
     }
     private void FixedUpdate()
