@@ -33,30 +33,27 @@ public class statsRegalo : MonoBehaviour
         }
         else
         {
-            puntaje = Random.Range(1, 4);
+            puntaje = Mathf.RoundToInt(Random.Range(1, 300) % 3);
         }
-        switch (Random.Range(0, 2))
+        for (int i = 0; i < puntaje; i++)
         {
-            case 0:
-                for (int i = 0; i < puntaje; i++)
-                {
-                    arr[Random.Range(0, 10)]++;
-                }
-                break;
-            case 1:
-                for (int i = 0; i < puntaje + 1; i++)
-                {
-                    
-                    arr[Random.Range(0, 10)]++;
-                }
-                int rand = 1;
-                while (rand == 1)
-                {
-                    rand = Random.Range(0, 11);
-                }
-                arr[rand] -= 1;
-                break;
+            switch (Mathf.RoundToInt(Random.Range(0f, 200f) % 2))
+            {
+                case 0:
+                    arr[Mathf.RoundToInt(Random.Range(0f, 1000f) % 10)]++;
+                    break;
+                case 1:
+                    arr[Mathf.RoundToInt(Random.Range(0f, 1000f) % 10)] += 2;
+                    int rand = 1;
+                    while (rand == 1)
+                    {
+                        rand = Mathf.RoundToInt(Random.Range(0f, 1100f) % 11);
+                    }
+                    arr[rand] -= 1;
+                    break;
+            }
         }
+            
         cambiarVidaMax = arr[0];
         cambiarVida = arr[1];
         cambiarVelocidad = arr[2];

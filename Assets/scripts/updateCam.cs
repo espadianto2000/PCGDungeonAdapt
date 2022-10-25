@@ -167,6 +167,8 @@ public class updateCam : MonoBehaviour
                 }
                 player.GetComponentInChildren<Animator>().SetBool("corriendo", false);
                 moverjugador = false;
+                player.GetComponent<statsJugador>().pGracia = true;
+                player.GetComponent<statsJugador>().disolverGraciaPublic();
                 //player.GetComponent<charController>().cuerpo.transform.localPosition = new Vector3(-0.08f, -0.5f, -0.15f);
                 player.GetComponent<charController>().animador.Play("Idle_Battle");
                 if (!finalizado)
@@ -227,10 +229,10 @@ public class updateCam : MonoBehaviour
             {
                 mandarEvaluadorEnemigos();
             }
-            Debug.Log("desempeño enem1: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[0]);
+            /*Debug.Log("desempeño enem1: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[0]);
             Debug.Log("desempeño enem2: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[1]);
             Debug.Log("desempeño enem3: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[2]);
-            Debug.Log("desempeño enem4: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[3]);
+            Debug.Log("desempeño enem4: " + dl.GetComponent<evaluadorDeDesempeño>().valoraciones[3]);*/
             List<int>[] temp = dl.GetComponent<evaluadorDeDesempeño>().listaDeArrays[dl.nivel];
             dl.actualizarModelosEnemigos();
         }
